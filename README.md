@@ -357,7 +357,7 @@ B.Tech CSE (2023–2027) · Data Science, Machine Learning & AI
 
 - GitHub: [github.com/harshantla-cloud](https://github.com/harshantla-cloud)
 - Project repository: [Fraud-Detection-System](https://github.com/harshantla-cloud/Fraud-Detection-System)
-
+- 🌐 Live Demo: (https://harsh-fraud-detection.streamlit.app/)
 ---
 
 ## 🔐 Disclaimer
