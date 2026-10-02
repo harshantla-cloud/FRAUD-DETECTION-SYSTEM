@@ -8,67 +8,10 @@ import os
 # =========================================================
 
 st.set_page_config(
-    page_title="Fraud Detection System",
+    page_title="AI Fraud Detection",
     page_icon="🔐",
     layout="wide"
 )
-
-# =========================================================
-# SIMPLE CSS
-# =========================================================
-
-st.markdown("""
-<style>
-
-.main-title {
-    text-align: center;
-    font-size: 38px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.subtitle {
-    text-align: center;
-    color: #777;
-    font-size: 17px;
-    margin-bottom: 25px;
-}
-
-.result-box {
-    padding: 25px;
-    border-radius: 12px;
-    text-align: center;
-    margin-top: 20px;
-}
-
-.fraud {
-    background-color: #ffe8e8;
-    border: 2px solid #ff4b4b;
-}
-
-.safe {
-    background-color: #e8f8ed;
-    border: 2px solid #21c354;
-}
-
-.result-title {
-    font-size: 26px;
-    font-weight: 700;
-}
-
-.risk-text {
-    font-size: 18px;
-    margin-top: 8px;
-}
-
-.footer {
-    text-align: center;
-    color: #888;
-    font-size: 13px;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
 # =========================================================
 # MODEL
@@ -91,7 +34,7 @@ try:
 
 except Exception as e:
     st.error("❌ Model could not be loaded.")
-    st.code("scikit-learn==1.6.1")
+    st.info("Required scikit-learn version: 1.6.1")
     st.exception(e)
     st.stop()
 
@@ -99,15 +42,32 @@ except Exception as e:
 # HEADER
 # =========================================================
 
-st.markdown(
-    '<div class="main-title">🔐 AI Fraud Detection System</div>',
-    unsafe_allow_html=True
+st.title("🔐 AI Fraud Detection System")
+
+st.write(
+    "Machine Learning based transaction fraud detection "
+    "and risk analysis."
 )
 
-st.markdown(
-    '<div class="subtitle">Machine Learning Based Transaction Fraud Detection</div>',
-    unsafe_allow_html=True
-)
+st.divider()
+
+# =========================================================
+# PROJECT INFO
+# =========================================================
+
+info1, info2, info3, info4 = st.columns(4)
+
+with info1:
+    st.metric("Technology", "Machine Learning")
+
+with info2:
+    st.metric("Prediction", "Real-Time")
+
+with info3:
+    st.metric("Output", "Fraud / Safe")
+
+with info4:
+    st.metric("Analysis", "Risk Score")
 
 st.divider()
 
@@ -115,17 +75,22 @@ st.divider()
 # INPUT SECTION
 # =========================================================
 
-st.subheader("💳 Enter Transaction Details")
+st.header("💳 Transaction Details")
+
+st.write(
+    "Enter the transaction information below and "
+    "click **Analyze Transaction**."
+)
 
 col1, col2 = st.columns(2)
 
 # =========================================================
-# SENDER DETAILS
+# SENDER
 # =========================================================
 
 with col1:
 
-    st.markdown("### 📤 Sender Details")
+    st.subheader("📤 Sender Information")
 
     transaction_type = st.selectbox(
         "Transaction Type",
@@ -160,12 +125,12 @@ with col1:
     )
 
 # =========================================================
-# RECEIVER DETAILS
+# RECEIVER
 # =========================================================
 
 with col2:
 
-    st.markdown("### 📥 Receiver Details")
+    st.subheader("📥 Receiver Information")
 
     old_balance_dest = st.number_input(
         "Receiver Balance Before Transaction",
@@ -182,8 +147,8 @@ with col2:
     )
 
     st.info(
-        "💡 Enter the transaction information and click "
-        "**Check Transaction**."
+        "💡 The model analyzes transaction type, amount "
+        "and sender/receiver balances."
     )
 
 # =========================================================
@@ -192,12 +157,12 @@ with col2:
 
 st.divider()
 
-col1, col2, col3 = st.columns([1, 2, 1])
+button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
 
-with col2:
+with button_col2:
 
     check_transaction = st.button(
-        "🔍 Check Transaction",
+        "🔍 Analyze Transaction",
         use_container_width=True
     )
 
@@ -207,6 +172,10 @@ with col2:
 
 if check_transaction:
 
+    # -----------------------------------------------------
+    # VALIDATION
+    # -----------------------------------------------------
+
     if amount <= 0:
 
         st.warning(
@@ -214,6 +183,10 @@ if check_transaction:
         )
 
         st.stop()
+
+    # -----------------------------------------------------
+    # INPUT DATA
+    # -----------------------------------------------------
 
     input_data = pd.DataFrame({
         "type": [transaction_type],
@@ -226,20 +199,23 @@ if check_transaction:
 
     try:
 
-        # Prediction
+        # -------------------------------------------------
+        # PREDICTION
+        # -------------------------------------------------
+
         prediction = model.predict(input_data)[0]
 
         probability = model.predict_proba(input_data)[0]
 
         fraud_probability = probability[1] * 100
 
-        # =================================================
+        # -------------------------------------------------
         # ANALYSIS
-        # =================================================
+        # -------------------------------------------------
 
         st.divider()
 
-        st.subheader("📊 Transaction Analysis")
+        st.header("📊 Transaction Analysis")
 
         st.dataframe(
             input_data,
@@ -247,63 +223,47 @@ if check_transaction:
             hide_index=True
         )
 
-        # =================================================
+        # -------------------------------------------------
         # RESULT
-        # =================================================
+        # -------------------------------------------------
+
+        st.subheader("🧠 Prediction Result")
 
         if prediction == 1:
 
-            st.markdown(
-                f"""
-                <div class="result-box fraud">
-
-                    <div class="result-title">
-                        🚨 FRAUDULENT TRANSACTION
-                    </div>
-
-                    <div class="risk-text">
-                        Fraud Risk Score:
-                        <b>{fraud_probability:.2f}%</b>
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.error(
+                "🚨 FRAUDULENT TRANSACTION"
             )
 
-            st.error(
-                "⚠️ The AI model has classified this transaction "
-                "as potentially fraudulent."
+            st.metric(
+                "Fraud Risk Score",
+                f"{fraud_probability:.2f}%"
+            )
+
+            st.warning(
+                "The machine learning model has classified "
+                "this transaction as potentially fraudulent."
             )
 
         else:
 
-            st.markdown(
-                f"""
-                <div class="result-box safe">
+            st.success(
+                "✅ LEGITIMATE TRANSACTION"
+            )
 
-                    <div class="result-title">
-                        ✅ LEGITIMATE TRANSACTION
-                    </div>
-
-                    <div class="risk-text">
-                        Fraud Risk Score:
-                        <b>{fraud_probability:.2f}%</b>
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.metric(
+                "Fraud Risk Score",
+                f"{fraud_probability:.2f}%"
             )
 
             st.success(
-                "✅ The AI model has classified this transaction "
-                "as legitimate."
+                "The machine learning model has classified "
+                "this transaction as legitimate."
             )
 
-        # =================================================
-        # RISK
-        # =================================================
+        # -------------------------------------------------
+        # RISK SCORE
+        # -------------------------------------------------
 
         st.subheader("🎯 Fraud Probability")
 
@@ -317,17 +277,49 @@ if check_transaction:
             )
         )
 
+        st.write(
+            f"Estimated fraud probability: "
+            f"**{fraud_probability:.2f}%**"
+        )
+
+        # -------------------------------------------------
+        # RISK LEVEL
+        # -------------------------------------------------
+
+        st.subheader("📌 Risk Level")
+
         if fraud_probability >= 70:
 
-            st.warning("🔴 High fraud risk")
+            st.error(
+                "🔴 HIGH RISK"
+            )
+
+            st.write(
+                "The transaction has a high estimated "
+                "fraud probability according to the model."
+            )
 
         elif fraud_probability >= 40:
 
-            st.warning("🟠 Medium fraud risk")
+            st.warning(
+                "🟠 MEDIUM RISK"
+            )
+
+            st.write(
+                "The transaction falls within the medium "
+                "estimated fraud-risk range."
+            )
 
         else:
 
-            st.success("🟢 Low fraud risk")
+            st.success(
+                "🟢 LOW RISK"
+            )
+
+            st.write(
+                "The transaction has a low estimated "
+                "fraud probability according to the model."
+            )
 
     except Exception as e:
 
@@ -341,11 +333,8 @@ if check_transaction:
 
 st.divider()
 
-st.markdown(
-    """
-    <div class="footer">
-        🔐 AI Fraud Detection System | Machine Learning Project
-    </div>
-    """,
-    unsafe_allow_html=True
+st.caption(
+    "🔐 AI Fraud Detection System | "
+    "Machine Learning Project | Transaction Risk Analysis"
 )
+
