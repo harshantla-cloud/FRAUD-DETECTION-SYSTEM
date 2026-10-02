@@ -1,115 +1,77 @@
-import os
-import joblib
-import pandas as pd
 import streamlit as st
-
+import pandas as pd
+import joblib
+import os
 
 # =========================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =========================================================
 
 st.set_page_config(
-    page_title="AI Fraud Detection System",
+    page_title="Fraud Detection System",
     page_icon="🔐",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
+# =========================================================
+# SIMPLE CSS
+# =========================================================
+
+st.markdown("""
+<style>
+
+.main-title {
+    text-align: center;
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    font-size: 17px;
+    margin-bottom: 25px;
+}
+
+.result-box {
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.fraud {
+    background-color: #ffe8e8;
+    border: 2px solid #ff4b4b;
+}
+
+.safe {
+    background-color: #e8f8ed;
+    border: 2px solid #21c354;
+}
+
+.result-title {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.risk-text {
+    font-size: 18px;
+    margin-top: 8px;
+}
+
+.footer {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # =========================================================
-# CUSTOM CSS
-# =========================================================
-
-st.markdown(
-    """
-    <style>
-
-    /* Main container */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-    }
-
-    /* Header */
-    .main-title {
-        font-size: 44px;
-        font-weight: 800;
-        text-align: center;
-        margin-bottom: 5px;
-    }
-
-    .subtitle {
-        text-align: center;
-        color: #777;
-        font-size: 18px;
-        margin-bottom: 30px;
-    }
-
-    /* Section headers */
-    .section-title {
-        font-size: 24px;
-        font-weight: 700;
-        margin-top: 10px;
-        margin-bottom: 15px;
-    }
-
-    /* Result cards */
-    .result-box {
-        padding: 28px;
-        border-radius: 16px;
-        text-align: center;
-        margin-top: 20px;
-        margin-bottom: 15px;
-    }
-
-    .fraud {
-        background: #fff0f0;
-        border: 2px solid #ff4b4b;
-    }
-
-    .safe {
-        background: #effff3;
-        border: 2px solid #21c354;
-    }
-
-    .result-title {
-        font-size: 28px;
-        font-weight: 800;
-        color: #111;
-    }
-
-    .risk-text {
-        font-size: 18px;
-        margin-top: 10px;
-        color: #333;
-    }
-
-    /* Info card */
-    .info-card {
-        padding: 18px;
-        border-radius: 12px;
-        background: #f7f7f7;
-        border: 1px solid #ddd;
-        margin-top: 10px;
-    }
-
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #888;
-        font-size: 14px;
-        margin-top: 25px;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# MODEL CONFIGURATION
+# MODEL
 # =========================================================
 
 MODEL_PATH = "models/fraud_detection_pipeline.pkl"
@@ -117,40 +79,21 @@ MODEL_PATH = "models/fraud_detection_pipeline.pkl"
 
 @st.cache_resource
 def load_model():
-    """Load the trained fraud detection pipeline."""
     return joblib.load(MODEL_PATH)
 
 
-# =========================================================
-# MODEL LOADING
-# =========================================================
-
 if not os.path.exists(MODEL_PATH):
-    st.error(
-        "❌ Model file not found. "
-        "Please make sure 'models/fraud_detection_pipeline.pkl' exists."
-    )
+    st.error("❌ Model file not found!")
     st.stop()
-
 
 try:
     model = load_model()
 
 except Exception as e:
-    st.error("❌ Unable to load the trained model.")
-
-    st.info(
-        "Make sure the deployed environment uses the same "
-        "scikit-learn version used during model training."
-    )
-
+    st.error("❌ Model could not be loaded.")
     st.code("scikit-learn==1.6.1")
-
-    with st.expander("Show technical error"):
-        st.exception(e)
-
+    st.exception(e)
     st.stop()
-
 
 # =========================================================
 # HEADER
@@ -162,32 +105,31 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="subtitle">'
-    'Machine Learning powered transaction fraud detection'
-    '</div>',
+    '<div class="subtitle">Machine Learning Based Transaction Fraud Detection</div>',
     unsafe_allow_html=True
 )
 
 st.divider()
 
-
 # =========================================================
-# TRANSACTION INPUT
+# INPUT SECTION
 # =========================================================
 
-st.markdown(
-    '<div class="section-title">💳 Transaction Details</div>',
-    unsafe_allow_html=True
-)
+st.subheader("💳 Enter Transaction Details")
 
 col1, col2 = st.columns(2)
 
+# =========================================================
+# SENDER DETAILS
+# =========================================================
 
 with col1:
 
+    st.markdown("### 📤 Sender Details")
+
     transaction_type = st.selectbox(
         "Transaction Type",
-        options=[
+        [
             "PAYMENT",
             "TRANSFER",
             "CASH_OUT",
@@ -200,85 +142,70 @@ with col1:
         "Transaction Amount",
         min_value=0.0,
         value=1000.0,
-        step=100.0,
-        format="%.2f"
+        step=100.0
     )
 
     old_balance_org = st.number_input(
         "Sender Balance Before Transaction",
         min_value=0.0,
         value=5000.0,
-        step=100.0,
-        format="%.2f"
+        step=100.0
     )
 
     new_balance_orig = st.number_input(
         "Sender Balance After Transaction",
         min_value=0.0,
         value=4000.0,
-        step=100.0,
-        format="%.2f"
+        step=100.0
     )
 
+# =========================================================
+# RECEIVER DETAILS
+# =========================================================
 
 with col2:
+
+    st.markdown("### 📥 Receiver Details")
 
     old_balance_dest = st.number_input(
         "Receiver Balance Before Transaction",
         min_value=0.0,
         value=2000.0,
-        step=100.0,
-        format="%.2f"
+        step=100.0
     )
 
     new_balance_dest = st.number_input(
         "Receiver Balance After Transaction",
         min_value=0.0,
         value=3000.0,
-        step=100.0,
-        format="%.2f"
+        step=100.0
     )
 
-    st.markdown(
-        """
-        <div class="info-card">
-        💡 <b>How it works</b><br><br>
-        Enter the transaction details and let the trained
-        machine learning pipeline classify the transaction
-        as legitimate or potentially fraudulent.
-        </div>
-        """,
-        unsafe_allow_html=True
+    st.info(
+        "💡 Enter the transaction information and click "
+        "**Check Transaction**."
     )
 
+# =========================================================
+# BUTTON
+# =========================================================
 
 st.divider()
 
+col1, col2, col3 = st.columns([1, 2, 1])
 
-# =========================================================
-# PREDICTION BUTTON
-# =========================================================
-
-button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
-
-with button_col2:
+with col2:
 
     check_transaction = st.button(
-        "🔍 Analyze Transaction",
-        use_container_width=True,
-        type="primary"
+        "🔍 Check Transaction",
+        use_container_width=True
     )
-
 
 # =========================================================
 # PREDICTION
 # =========================================================
 
 if check_transaction:
-
-    # -----------------------------------------------------
-    # INPUT VALIDATION
-    # -----------------------------------------------------
 
     if amount <= 0:
 
@@ -288,46 +215,31 @@ if check_transaction:
 
         st.stop()
 
-
-    # -----------------------------------------------------
-    # CREATE INPUT DATAFRAME
-    # -----------------------------------------------------
-
-    input_data = pd.DataFrame(
-        {
-            "type": [transaction_type],
-            "amount": [amount],
-            "oldbalanceOrg": [old_balance_org],
-            "newbalanceOrig": [new_balance_orig],
-            "oldbalanceDest": [old_balance_dest],
-            "newbalanceDest": [new_balance_dest]
-        }
-    )
-
-
-    # -----------------------------------------------------
-    # MODEL PREDICTION
-    # -----------------------------------------------------
+    input_data = pd.DataFrame({
+        "type": [transaction_type],
+        "amount": [amount],
+        "oldbalanceOrg": [old_balance_org],
+        "newbalanceOrig": [new_balance_orig],
+        "oldbalanceDest": [old_balance_dest],
+        "newbalanceDest": [new_balance_dest]
+    })
 
     try:
 
+        # Prediction
         prediction = model.predict(input_data)[0]
 
-        probabilities = model.predict_proba(input_data)[0]
+        probability = model.predict_proba(input_data)[0]
 
-        fraud_probability = probabilities[1] * 100
+        fraud_probability = probability[1] * 100
 
-
-        # -------------------------------------------------
-        # ANALYSIS SECTION
-        # -------------------------------------------------
+        # =================================================
+        # ANALYSIS
+        # =================================================
 
         st.divider()
 
-        st.markdown(
-            '<div class="section-title">📊 Transaction Analysis</div>',
-            unsafe_allow_html=True
-        )
+        st.subheader("📊 Transaction Analysis")
 
         st.dataframe(
             input_data,
@@ -335,10 +247,9 @@ if check_transaction:
             hide_index=True
         )
 
-
-        # -------------------------------------------------
-        # FRAUD RESULT
-        # -------------------------------------------------
+        # =================================================
+        # RESULT
+        # =================================================
 
         if prediction == 1:
 
@@ -351,7 +262,7 @@ if check_transaction:
                     </div>
 
                     <div class="risk-text">
-                        Fraud Probability:
+                        Fraud Risk Score:
                         <b>{fraud_probability:.2f}%</b>
                     </div>
 
@@ -361,14 +272,9 @@ if check_transaction:
             )
 
             st.error(
-                "The machine learning model has classified "
-                "this transaction as potentially fraudulent."
+                "⚠️ The AI model has classified this transaction "
+                "as potentially fraudulent."
             )
-
-
-        # -------------------------------------------------
-        # LEGITIMATE RESULT
-        # -------------------------------------------------
 
         else:
 
@@ -381,7 +287,7 @@ if check_transaction:
                     </div>
 
                     <div class="risk-text">
-                        Fraud Probability:
+                        Fraud Risk Score:
                         <b>{fraud_probability:.2f}%</b>
                     </div>
 
@@ -391,74 +297,43 @@ if check_transaction:
             )
 
             st.success(
-                "The machine learning model has classified "
-                "this transaction as legitimate."
+                "✅ The AI model has classified this transaction "
+                "as legitimate."
             )
 
+        # =================================================
+        # RISK
+        # =================================================
 
-        # -------------------------------------------------
-        # RISK INDICATOR
-        # -------------------------------------------------
-
-        st.markdown(
-            '<div class="section-title">🎯 Fraud Risk Indicator</div>',
-            unsafe_allow_html=True
-        )
+        st.subheader("🎯 Fraud Probability")
 
         st.progress(
-            min(max(int(fraud_probability), 0), 100)
+            min(
+                max(
+                    int(fraud_probability),
+                    0
+                ),
+                100
+            )
         )
-
 
         if fraud_probability >= 70:
 
-            st.warning(
-                "🔴 High Fraud Risk — The transaction requires "
-                "careful review."
-            )
+            st.warning("🔴 High fraud risk")
 
         elif fraud_probability >= 40:
 
-            st.warning(
-                "🟠 Medium Fraud Risk — The transaction "
-                "shows some risk indicators."
-            )
+            st.warning("🟠 Medium fraud risk")
 
         else:
 
-            st.info(
-                "🟢 Low Fraud Risk — The model predicts a "
-                "lower probability of fraud."
-            )
-
-
-        # -------------------------------------------------
-        # MODEL OUTPUT
-        # -------------------------------------------------
-
-        with st.expander("🔎 View Model Output"):
-
-            st.write(
-                {
-                    "Prediction": int(prediction),
-                    "Fraud Probability": f"{fraud_probability:.2f}%",
-                    "Transaction Type": transaction_type,
-                    "Transaction Amount": amount
-                }
-            )
-
+            st.success("🟢 Low fraud risk")
 
     except Exception as e:
 
-        st.error(
-            "❌ Prediction failed. Please verify the input "
-            "data and model configuration."
-        )
+        st.error("❌ Prediction failed.")
 
-        with st.expander("Show technical error"):
-
-            st.exception(e)
-
+        st.exception(e)
 
 # =========================================================
 # FOOTER
@@ -469,11 +344,8 @@ st.divider()
 st.markdown(
     """
     <div class="footer">
-        🔐 AI Fraud Detection System
-        &nbsp;|&nbsp;
-        Machine Learning Project
+        🔐 AI Fraud Detection System | Machine Learning Project
     </div>
     """,
     unsafe_allow_html=True
 )
-
