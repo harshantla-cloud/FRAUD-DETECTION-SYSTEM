@@ -1,179 +1,333 @@
-import streamlit as st
-import pandas as pd
-import joblib
 import os
+import joblib
+import pandas as pd
+import streamlit as st
 
-# Page
+
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
+
 st.set_page_config(
-    page_title="Fraud Detection System",
+    page_title="AI Fraud Detection System",
     page_icon="🔐",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# CSS
-st.markdown("""
-<style>
-.main-title {
-    font-size: 42px;
-    font-weight: 700;
-    text-align: center;
-}
 
-.subtitle {
-    text-align: center;
-    color: #888;
-    font-size: 18px;
-    margin-bottom: 25px;
-}
+# =========================================================
+# CUSTOM CSS
+# =========================================================
 
-.result-box {
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-    margin-top: 25px;
-}
+st.markdown(
+    """
+    <style>
 
-.fraud {
-    background-color: #ffe5e5;
-    border: 2px solid #ff4b4b;
-}
+    /* Main container */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }
 
-.safe {
-    background-color: #e5ffe9;
-    border: 2px solid #21c354;
-}
+    /* Header */
+    .main-title {
+        font-size: 44px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 5px;
+    }
 
-.result-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #111;
-}
+    .subtitle {
+        text-align: center;
+        color: #777;
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
 
-.risk-text {
-    font-size: 18px;
-    margin-top: 10px;
-    color: #222;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Section headers */
+    .section-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
 
-# Model
+    /* Result cards */
+    .result-box {
+        padding: 28px;
+        border-radius: 16px;
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 15px;
+    }
+
+    .fraud {
+        background: #fff0f0;
+        border: 2px solid #ff4b4b;
+    }
+
+    .safe {
+        background: #effff3;
+        border: 2px solid #21c354;
+    }
+
+    .result-title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #111;
+    }
+
+    .risk-text {
+        font-size: 18px;
+        margin-top: 10px;
+        color: #333;
+    }
+
+    /* Info card */
+    .info-card {
+        padding: 18px;
+        border-radius: 12px;
+        background: #f7f7f7;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        color: #888;
+        font-size: 14px;
+        margin-top: 25px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# =========================================================
+# MODEL CONFIGURATION
+# =========================================================
+
 MODEL_PATH = "models/fraud_detection_pipeline.pkl"
+
 
 @st.cache_resource
 def load_model():
+    """Load the trained fraud detection pipeline."""
     return joblib.load(MODEL_PATH)
 
+
+# =========================================================
+# MODEL LOADING
+# =========================================================
+
 if not os.path.exists(MODEL_PATH):
-    st.error("❌ Model file not found!")
+    st.error(
+        "❌ Model file not found. "
+        "Please make sure 'models/fraud_detection_pipeline.pkl' exists."
+    )
     st.stop()
+
 
 try:
     model = load_model()
+
 except Exception as e:
-    st.error("❌ Model could not be loaded.")
+    st.error("❌ Unable to load the trained model.")
+
+    st.info(
+        "Make sure the deployed environment uses the same "
+        "scikit-learn version used during model training."
+    )
+
     st.code("scikit-learn==1.6.1")
-    st.exception(e)
+
+    with st.expander("Show technical error"):
+        st.exception(e)
+
     st.stop()
 
-# Header
+
+# =========================================================
+# HEADER
+# =========================================================
+
 st.markdown(
     '<div class="main-title">🔐 AI Fraud Detection System</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">Machine Learning based Transaction Fraud Detection</div>',
+    '<div class="subtitle">'
+    'Machine Learning powered transaction fraud detection'
+    '</div>',
     unsafe_allow_html=True
 )
 
 st.divider()
 
-# Inputs
-st.subheader("💳 Enter Transaction Details")
+
+# =========================================================
+# TRANSACTION INPUT
+# =========================================================
+
+st.markdown(
+    '<div class="section-title">💳 Transaction Details</div>',
+    unsafe_allow_html=True
+)
 
 col1, col2 = st.columns(2)
 
+
 with col1:
+
     transaction_type = st.selectbox(
         "Transaction Type",
-        ["PAYMENT", "TRANSFER", "CASH_OUT", "DEBIT", "CASH_IN"]
+        options=[
+            "PAYMENT",
+            "TRANSFER",
+            "CASH_OUT",
+            "DEBIT",
+            "CASH_IN"
+        ]
     )
 
     amount = st.number_input(
         "Transaction Amount",
         min_value=0.0,
         value=1000.0,
-        step=100.0
+        step=100.0,
+        format="%.2f"
     )
 
     old_balance_org = st.number_input(
         "Sender Balance Before Transaction",
         min_value=0.0,
         value=5000.0,
-        step=100.0
+        step=100.0,
+        format="%.2f"
     )
 
     new_balance_orig = st.number_input(
         "Sender Balance After Transaction",
         min_value=0.0,
         value=4000.0,
-        step=100.0
+        step=100.0,
+        format="%.2f"
     )
 
+
 with col2:
+
     old_balance_dest = st.number_input(
         "Receiver Balance Before Transaction",
         min_value=0.0,
         value=2000.0,
-        step=100.0
+        step=100.0,
+        format="%.2f"
     )
 
     new_balance_dest = st.number_input(
         "Receiver Balance After Transaction",
         min_value=0.0,
         value=3000.0,
-        step=100.0
+        step=100.0,
+        format="%.2f"
     )
 
-    st.info(
-        "💡 Enter transaction information and click **Check Transaction**."
+    st.markdown(
+        """
+        <div class="info-card">
+        💡 <b>How it works</b><br><br>
+        Enter the transaction details and let the trained
+        machine learning pipeline classify the transaction
+        as legitimate or potentially fraudulent.
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+
 
 st.divider()
 
-# Button
-c1, c2, c3 = st.columns([1, 2, 1])
 
-with c2:
+# =========================================================
+# PREDICTION BUTTON
+# =========================================================
+
+button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
+
+with button_col2:
+
     check_transaction = st.button(
-        "🔍 Check Transaction",
-        use_container_width=True
+        "🔍 Analyze Transaction",
+        use_container_width=True,
+        type="primary"
     )
 
-# Prediction
+
+# =========================================================
+# PREDICTION
+# =========================================================
+
 if check_transaction:
 
+    # -----------------------------------------------------
+    # INPUT VALIDATION
+    # -----------------------------------------------------
+
     if amount <= 0:
-        st.warning("⚠️ Transaction amount must be greater than 0.")
+
+        st.warning(
+            "⚠️ Transaction amount must be greater than 0."
+        )
+
         st.stop()
 
-    input_data = pd.DataFrame({
-        "type": [transaction_type],
-        "amount": [amount],
-        "oldbalanceOrg": [old_balance_org],
-        "newbalanceOrig": [new_balance_orig],
-        "oldbalanceDest": [old_balance_dest],
-        "newbalanceDest": [new_balance_dest]
-    })
+
+    # -----------------------------------------------------
+    # CREATE INPUT DATAFRAME
+    # -----------------------------------------------------
+
+    input_data = pd.DataFrame(
+        {
+            "type": [transaction_type],
+            "amount": [amount],
+            "oldbalanceOrg": [old_balance_org],
+            "newbalanceOrig": [new_balance_orig],
+            "oldbalanceDest": [old_balance_dest],
+            "newbalanceDest": [new_balance_dest]
+        }
+    )
+
+
+    # -----------------------------------------------------
+    # MODEL PREDICTION
+    # -----------------------------------------------------
 
     try:
+
         prediction = model.predict(input_data)[0]
-        probability = model.predict_proba(input_data)[0]
-        fraud_probability = probability[1] * 100
+
+        probabilities = model.predict_proba(input_data)[0]
+
+        fraud_probability = probabilities[1] * 100
+
+
+        # -------------------------------------------------
+        # ANALYSIS SECTION
+        # -------------------------------------------------
 
         st.divider()
-        st.subheader("📊 Transaction Analysis")
+
+        st.markdown(
+            '<div class="section-title">📊 Transaction Analysis</div>',
+            unsafe_allow_html=True
+        )
 
         st.dataframe(
             input_data,
@@ -181,65 +335,145 @@ if check_transaction:
             hide_index=True
         )
 
-        # Result
+
+        # -------------------------------------------------
+        # FRAUD RESULT
+        # -------------------------------------------------
+
         if prediction == 1:
+
             st.markdown(
                 f"""
                 <div class="result-box fraud">
+
                     <div class="result-title">
                         🚨 FRAUDULENT TRANSACTION
                     </div>
+
                     <div class="risk-text">
-                        Fraud Risk Score: <b>{fraud_probability:.2f}%</b>
+                        Fraud Probability:
+                        <b>{fraud_probability:.2f}%</b>
                     </div>
+
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
             st.error(
-                "⚠️ The AI model has classified this transaction as potentially fraudulent."
+                "The machine learning model has classified "
+                "this transaction as potentially fraudulent."
             )
 
+
+        # -------------------------------------------------
+        # LEGITIMATE RESULT
+        # -------------------------------------------------
+
         else:
+
             st.markdown(
                 f"""
                 <div class="result-box safe">
+
                     <div class="result-title">
                         ✅ LEGITIMATE TRANSACTION
                     </div>
+
                     <div class="risk-text">
-                        Fraud Risk Score: <b>{fraud_probability:.2f}%</b>
+                        Fraud Probability:
+                        <b>{fraud_probability:.2f}%</b>
                     </div>
+
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
             st.success(
-                "✅ The AI model has classified this transaction as legitimate."
+                "The machine learning model has classified "
+                "this transaction as legitimate."
             )
 
-        # Risk
-        st.subheader("🎯 Fraud Probability")
+
+        # -------------------------------------------------
+        # RISK INDICATOR
+        # -------------------------------------------------
+
+        st.markdown(
+            '<div class="section-title">🎯 Fraud Risk Indicator</div>',
+            unsafe_allow_html=True
+        )
 
         st.progress(
             min(max(int(fraud_probability), 0), 100)
         )
 
+
         if fraud_probability >= 70:
-            st.warning("🔴 High fraud risk")
+
+            st.warning(
+                "🔴 High Fraud Risk — The transaction requires "
+                "careful review."
+            )
+
         elif fraud_probability >= 40:
-            st.warning("🟠 Medium fraud risk")
+
+            st.warning(
+                "🟠 Medium Fraud Risk — The transaction "
+                "shows some risk indicators."
+            )
+
         else:
-            st.info("🟢 Low fraud risk")
+
+            st.info(
+                "🟢 Low Fraud Risk — The model predicts a "
+                "lower probability of fraud."
+            )
+
+
+        # -------------------------------------------------
+        # MODEL OUTPUT
+        # -------------------------------------------------
+
+        with st.expander("🔎 View Model Output"):
+
+            st.write(
+                {
+                    "Prediction": int(prediction),
+                    "Fraud Probability": f"{fraud_probability:.2f}%",
+                    "Transaction Type": transaction_type,
+                    "Transaction Amount": amount
+                }
+            )
+
 
     except Exception as e:
-        st.error("❌ Prediction failed.")
-        st.exception(e)
+
+        st.error(
+            "❌ Prediction failed. Please verify the input "
+            "data and model configuration."
+        )
+
+        with st.expander("Show technical error"):
+
+            st.exception(e)
+
+
+# =========================================================
+# FOOTER
+# =========================================================
 
 st.divider()
 
-st.caption(
-    "AI Fraud Detection System | Machine Learning Project"
+st.markdown(
+    """
+    <div class="footer">
+        🔐 AI Fraud Detection System
+        &nbsp;|&nbsp;
+        Machine Learning Project
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
